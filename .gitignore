@@ -1,0 +1,71 @@
+# Dependency folders
+node_modules/
+venv/
+.venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+
+# Local environment variables
+.env
+.env.*
+!.env.example
+
+# IDE configurations
+.vscode/
+.idea/
+
+# Testing output
+htmlcov/
+.coverage
+.coverage.*
+.pytest_cache/
+*.log
+logs/
+
+# Next.js build output
+.next/
+out/
+build/
+dist/
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+
+# Terraform files
+.terraform/
+*.tfstate
+*.tfstate.backup
+crash.log
+
+# Public demo hygiene
+*.pem
+*.key
+credentials.json
+*credentials*.json
+*service-account*.json
+*secret*.json
+*.tfvars
+*.tfvars.json
+*.p12
+*.pfx
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
+chroma/
+chroma_db/
+faiss_index/
+vector_store/
+vectorstores/
+generated/
+outputs/
+artifacts/
+.claude/

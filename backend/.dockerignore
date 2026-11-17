@@ -1,0 +1,12 @@
+.env
+.env.*
+**/.env
+**/.env.*
+**/*secret*
+**/*credential*
+**/*.pem
+**/*.key
+**/__pycache__
+.pytest_cache
+.venv
+tests

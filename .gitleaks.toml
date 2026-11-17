@@ -1,0 +1,8 @@
+title = "CredLens public demo"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Generated local dependency and bytecode directories"
+paths = ['''(^|[\\/])\.venv[\\/]''', '''(^|[\\/])__pycache__[\\/]''']

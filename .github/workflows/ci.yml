@@ -1,0 +1,64 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    name: CI checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - name: Backend unit tests
+        run: |
+          python -m pip install -r backend/requirements.txt
+          python -m pip check
+          cd backend
+          python -m pytest -q
+      - name: API and worker smoke test (synthetic data)
+        env:
+          ANTHROPIC_API_KEY: ''
+          CLAUDE_MODEL: ''
+        run: |
+          trap 'docker compose --env-file .env.example down -v' EXIT
+          docker compose --env-file .env.example up --build --detach
+          curl --fail --silent --show-error --retry 15 --retry-all-errors --retry-delay 2 http://127.0.0.1:8000/health
+          python - <<'PY'
+          import json
+          import time
+          from urllib.request import Request, urlopen
+
+          base = "http://127.0.0.1:8000/v1/applications"
+          request = Request(base, data=b'{"applicant_id":"APP-DEMO-001"}',
+                            headers={"Content-Type": "application/json"})
+          with urlopen(request, timeout=10) as response:
+              submitted = json.load(response)
+          application = base + "/" + str(submitted["application_id"])
+          for _ in range(30):
+              with urlopen(application, timeout=10) as response:
+                  status = json.load(response)
+              if status["status"].lower() == "success":
+                  break
+              if status["status"].lower() == "failure":
+                  raise SystemExit("Celery task failed")
+              time.sleep(1)
+          else:
+              raise SystemExit("Celery task did not finish")
+          with urlopen(application + "/memo", timeout=10) as response:
+              memo = json.load(response)
+          assert memo["applicant_id"] == "APP-DEMO-001", memo
+          assert memo["synthetic"] is True, memo
+          assert memo["memo"]["generation_mode"] == "CANNED", memo
+          assert memo["usage"] == {"input_tokens": 0, "output_tokens": 0}, memo
+          print("Synthetic memo passed through API, Redis and Celery with zero provider tokens.")
+          PY
